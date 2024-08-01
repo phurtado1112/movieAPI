@@ -1,31 +1,44 @@
-from fastapi import FastAPI
-from typing import Union
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
-from pydantic import BaseModel
+""" API de Películas """
+from fastapi import FastAPI, Depends
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
+from config.database import get_db
+from models.pelicula_model import Pelicula
+
 
 app = FastAPI()
 
-app.title = "Movie API"
+app.title = "API de Peliculas"
 app.version = "0.0.1"
 
-SQLALCHEMY_DATABASE_URL = "postgresql://movieapi:Moap2024!@localhost:/movies"
+# Montar el directorio static para servir archivos estáticos
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-Base = declarative_base()
+# Ruta para servir el favicon.ico
 
-class Movie(Base):
-    __tablename__ = "peliculas"
 
-    pelicula_id = Column(Integer, primary_key=True, index=True)
-    titulo = Column(String, index=True)
-    descripcion = Column(String)
-    anio_publicacion = Column(Integer)
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Ruta para servir el favicon.ico"""
+    return FileResponse("static/favicon.ico")
+
 
 @app.get("/", tags=["Home"])
 def read_root():
-    return {"Hello": "World"}
+    """Ruta de bienvenida"""
+    return "Hello World"
 
-@app.get("/movies/{movie_id}", tags=["Movies"])
-def read_movie(movie_id: int):
-    return {"movie_id": movie_id}
+
+@app.get("/peliculas", tags=["Peliculas"], status_code=200)
+def get_peliculas(db: Session = Depends(get_db)):
+    """Obtener todas las películas"""
+    try:
+        result = db.query(Pelicula).all()
+        # Convertir los resultados a JSON, manejando errores de decodificación
+        json_result = jsonable_encoder(result, custom_encoder={
+                                       str: lambda x: x.encode('utf-8', errors='replace').decode('utf-8')})
+        return JSONResponse(status_code=200, content=json_result)
+    except UnicodeDecodeError as e:
+        return JSONResponse(status_code=500, content={"message": "Error de decodificación de caracteres", "error": str(e)})
