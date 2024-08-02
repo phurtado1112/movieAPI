@@ -1,7 +1,8 @@
 """"Módulo que define el modelo de la entidad Pelicula."""
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from config.database import Base
+from models.lenguaje_model import Lenguaje
 
 
 class Pelicula(Base):  # pylint: disable=too-few-public-methods
@@ -21,12 +22,13 @@ class Pelicula(Base):  # pylint: disable=too-few-public-methods
     titulo = Column(String)
     descripcion = Column(String)
     anio_publicacion = Column(Integer)
-    # lenguaje_id = Column(Integer, ForeignKey("lenguajes.lenguaje_id"))
+    lenguaje_id = Column(Integer, ForeignKey("lenguajes.lenguaje_id"))
+    lenguaje = relationship("Lenguaje", back_populates="pelicula")
 
-    # lenguaje = relationship("lenguaje", back_populates="peliculas")
-
-    def __init__(self, titulo, descripcion, anio_publicacion):
+    def __init__(self, titulo, descripcion, anio_publicacion, lenguaje_id, lenguaje):
         self.titulo = titulo
         self.descripcion = descripcion
         self.anio_publicacion = anio_publicacion
-        # self.lenguaje_id = lenguaje_id
+        self.lenguaje_id = lenguaje_id
+        self.lenguaje = lenguaje
+        self.nombre = lenguaje.nombre
