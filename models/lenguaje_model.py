@@ -19,7 +19,8 @@ class Lenguaje(Base):
                          index=True, autoincrement=True)
     nombre = Column(String)
 
-    pelicula = relationship("Pelicula", back_populates="lenguaje")
+    peliculas = relationship("Pelicula",
+                             back_populates="lenguaje", cascade="delete, merge")
 
     def __init__(self, nombre):
         self.nombre = nombre
