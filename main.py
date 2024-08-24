@@ -7,8 +7,11 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 from config.database import get_db
+from jwt_manager import create_jwt
 from models.pelicula_model import Pelicula
-from schemas.pelicula_schema import PeliculaSchema, PeliculaCreate, PeliculaActulizar
+from schemas.pelicula_schema import (PeliculaActulizar, PeliculaCreate,
+                                     PeliculaSchema)
+from schemas.user_schema import UserLogin
 
 app = FastAPI()
 
@@ -26,6 +29,20 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def favicon():
     """Ruta para servir el favicon.ico"""
     return FileResponse("static/favicon.ico")
+
+
+@app.post("/login", tags=["Autenticación"], status_code=200)
+def login(user: UserLogin):
+    """Iniciar sesión"""
+    if user.email == "phurtado1112@gmail.com" and user.password == "123456":
+        token: str = create_jwt(user.dict(), "secret")
+    # user_data = {
+    #     "email": user.email,
+    #     "password": user.password
+    # }
+    # token = create_jwt(user_data, "secret")
+    # return {"token": token}
+    return JSONResponse(status_code=200, content={"token": token})
 
 
 @app.get("/", tags=["Home"])
@@ -57,10 +74,12 @@ def get_peliculas(db: Session = Depends(get_db)):
         return peliculas_data
 
     except UnicodeDecodeError as e:
-        return JSONResponse(status_code=500, content={"message": "Error de decodificación de caracteres", "error": str(e)})
+        return JSONResponse(status_code=500, content={
+            "message": "Error de decodificación de caracteres", "error": str(e)})
 
 
-@app.get("/peliculas/{pelicula_id}", response_model=PeliculaSchema, tags=["Peliculas"], status_code=200)
+@app.get("/peliculas/{pelicula_id}",
+         response_model=PeliculaSchema, tags=["Peliculas"], status_code=200)
 def get_pelicula(pelicula_id: int, db: Session = Depends(get_db)):
     """Obtener una película por su ID"""
     try:
@@ -84,7 +103,9 @@ def get_pelicula(pelicula_id: int, db: Session = Depends(get_db)):
 
         return PeliculaSchema(**pelicula_data)
     except UnicodeDecodeError as e:
-        return JSONResponse(status_code=500, content={"message": "Error de decodificación de caracteres", "error": str(e)})
+        # Mensaje de error
+        return JSONResponse(status_code=500, content={
+            "message": "Error de decodificación de caracteres", "error": str(e)})
 
 
 @app.post("/peliculas", response_model=PeliculaCreate, tags=["Peliculas"], status_code=201)
@@ -99,10 +120,13 @@ def create_pelicula(pelicula: PeliculaCreate, db: Session = Depends(get_db)):
         db.refresh(agregar_pelicula)
         return agregar_pelicula
     except UnicodeDecodeError as e:
-        return JSONResponse(status_code=500, content={"message": "Error de decodificación de caracteres", "error": str(e)})
+        # Mensaje de error
+        return JSONResponse(status_code=500, content={
+            "message": "Error de decodificación de caracteres", "error": str(e)})
 
 
-@app.put("/peliculas/{pelicula_id}", response_model=PeliculaActulizar, tags=["Peliculas"], status_code=200)
+@app.put("/peliculas/{pelicula_id}",
+         response_model=PeliculaActulizar, tags=["Peliculas"], status_code=200)
 def update_pelicula(pelicula_id: int, pelicula: PeliculaActulizar, db: Session = Depends(get_db)):
     """Actualizar una película"""
     try:
@@ -124,7 +148,9 @@ def update_pelicula(pelicula_id: int, pelicula: PeliculaActulizar, db: Session =
         db.refresh(pelicula_actualizada)
         return pelicula_actualizada
     except UnicodeDecodeError as e:
-        return JSONResponse(status_code=500, content={"message": "Error de decodificación de caracteres", "error": str(e)})
+        # Mensaje de error
+        return JSONResponse(status_code=500, content={
+            "message": "Error de decodificación de caracteres", "error": str(e)})
 
 
 @app.delete("/peliculas/{pelicula_id}", tags=["Peliculas"], status_code=204)
@@ -136,18 +162,10 @@ def delete_pelicula(pelicula_id: int, db: Session = Depends(get_db)):
         db.commit()
         return JSONResponse(status_code=204, content={"message": "Película eliminada"})
     except UnicodeDecodeError as e:
-        return JSONResponse(status_code=500, content={"message": "Error de decodificación de caracteres", "error": str(e)})
+        # Mensaje de error
+        return JSONResponse(status_code=500, content={
+            "message": "Error de decodificación de caracteres", "error": str(e)})
 
-
-# @app.get("/peliculas/{pelicula_id}/lenguaje", response_model=PeliculaSchema, tags=["Peliculas"], status_code=200)
-# def get_lenguaje(pelicula_id: int, db: Session = Depends(get_db)):
-#     """Obtener el lenguaje de una película por su ID"""
-#     try:
-#         pelicula = db.query(Pelicula).filter(
-#             Pelicula.pelicula_id == pelicula_id).first()
-#         return pelicula.lenguaje
-#     except UnicodeDecodeError as e:
-#         return JSONResponse(status_code=500, content={"message": "Error de decodificación de caracteres", "error": str(e)})
 
 @app.get("/peliculas/{pelicula_id}/lenguaje", tags=["Peliculas"], status_code=200)
 def get_lenguaje(pelicula_id: int, db: Session = Depends(get_db)):
@@ -157,11 +175,17 @@ def get_lenguaje(pelicula_id: int, db: Session = Depends(get_db)):
             Pelicula.pelicula_id == pelicula_id).first()
         return pelicula.lenguaje
     except UnicodeDecodeError as e:
-        return JSONResponse(status_code=500, content={"message": "Error de decodificación de caracteres", "error": str(e)})
+        # Mensaje de error
+        return JSONResponse(status_code=500, content={
+            "message": "Error de decodificación de caracteres", "error": str(e)})
 
 
-@app.patch("/peliculas/{pelicula_id}", response_model=PeliculaActulizar, tags=["Peliculas"], status_code=200)
-def update_parcial_pelicula(pelicula_id: int, pelicula: PeliculaActulizar, db: Session = Depends(get_db)):
+@app.patch("/peliculas/{pelicula_id}",
+           response_model=PeliculaActulizar, tags=["Peliculas"], status_code=200)
+def update_parcial_pelicula(
+        pelicula_id: int,
+        pelicula: PeliculaActulizar,
+        db: Session = Depends(get_db)):
     """Actualizar una película"""
     try:
         pelicula_actualizada = db.query(Pelicula).filter(
@@ -182,4 +206,6 @@ def update_parcial_pelicula(pelicula_id: int, pelicula: PeliculaActulizar, db: S
         db.refresh(pelicula_actualizada)
         return pelicula_actualizada
     except UnicodeDecodeError as e:
-        return JSONResponse(status_code=500, content={"message": "Error de decodificación de caracteres", "error": str(e)})
+        # Mensaje de error
+        return JSONResponse(status_code=500, content={
+            "message": "Error de decodificación de caracteres", "error": str(e)})
