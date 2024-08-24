@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from config.database import get_db
 from jwt_manager import create_jwt
+from jwt_bearer import HTTPBearer
 from models.pelicula_model import Pelicula
 from schemas.pelicula_schema import (PeliculaActulizar, PeliculaCreate,
                                      PeliculaSchema)
@@ -51,7 +52,11 @@ def read_root():
     return "Bienvenido a la API de Películas"
 
 
-@app.get("/peliculas", response_model=List[PeliculaSchema], tags=["Peliculas"], status_code=200)
+@app.get("/peliculas",
+         response_model=List[PeliculaSchema],
+         tags=["Peliculas"],
+         status_code=200,
+         dependencies=[Depends(HTTPBearer())])
 def get_peliculas(db: Session = Depends(get_db)):
     """Obtener todas las películas"""
     try:
@@ -79,7 +84,10 @@ def get_peliculas(db: Session = Depends(get_db)):
 
 
 @app.get("/peliculas/{pelicula_id}",
-         response_model=PeliculaSchema, tags=["Peliculas"], status_code=200)
+         response_model=PeliculaSchema,
+         tags=["Peliculas"],
+         status_code=200,
+         dependencies=[Depends(HTTPBearer())])
 def get_pelicula(pelicula_id: int, db: Session = Depends(get_db)):
     """Obtener una película por su ID"""
     try:
@@ -108,7 +116,11 @@ def get_pelicula(pelicula_id: int, db: Session = Depends(get_db)):
             "message": "Error de decodificación de caracteres", "error": str(e)})
 
 
-@app.post("/peliculas", response_model=PeliculaCreate, tags=["Peliculas"], status_code=201)
+@app.post("/peliculas",
+          response_model=PeliculaCreate,
+          tags=["Peliculas"],
+          status_code=201,
+          dependencies=[Depends(HTTPBearer())])
 def create_pelicula(pelicula: PeliculaCreate, db: Session = Depends(get_db)):
     """Crear una nueva película"""
     try:
@@ -126,7 +138,10 @@ def create_pelicula(pelicula: PeliculaCreate, db: Session = Depends(get_db)):
 
 
 @app.put("/peliculas/{pelicula_id}",
-         response_model=PeliculaActulizar, tags=["Peliculas"], status_code=200)
+         response_model=PeliculaActulizar,
+         tags=["Peliculas"],
+         status_code=200,
+         dependencies=[Depends(HTTPBearer())])
 def update_pelicula(pelicula_id: int, pelicula: PeliculaActulizar, db: Session = Depends(get_db)):
     """Actualizar una película"""
     try:
@@ -153,7 +168,10 @@ def update_pelicula(pelicula_id: int, pelicula: PeliculaActulizar, db: Session =
             "message": "Error de decodificación de caracteres", "error": str(e)})
 
 
-@app.delete("/peliculas/{pelicula_id}", tags=["Peliculas"], status_code=204)
+@app.delete("/peliculas/{pelicula_id}",
+            tags=["Peliculas"],
+            status_code=204,
+            dependencies=[Depends(HTTPBearer())])
 def delete_pelicula(pelicula_id: int, db: Session = Depends(get_db)):
     """Eliminar una película"""
     try:
@@ -181,7 +199,10 @@ def get_lenguaje(pelicula_id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/peliculas/{pelicula_id}",
-           response_model=PeliculaActulizar, tags=["Peliculas"], status_code=200)
+           response_model=PeliculaActulizar,
+           tags=["Peliculas"],
+           status_code=200,
+           dependencies=[Depends(HTTPBearer())])
 def update_parcial_pelicula(
         pelicula_id: int,
         pelicula: PeliculaActulizar,
